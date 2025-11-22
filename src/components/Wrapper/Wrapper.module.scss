@@ -1,0 +1,71 @@
+.wrapper {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 100vh;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.whiteboard_div {
+  width: 100%;
+  height: 100%;
+}
+
+.leftside_div {
+  position: absolute;
+  left: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: fit-content;
+  z-index: 1;
+}
+
+.composer_bar_div {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: fit-content;
+  height: fit-content;
+  z-index: 1;
+}
+
+.action_bar_div {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 1.6rem;
+  width: fit-content;
+  height: fit-content;
+  z-index: 1;
+}
+
+.folders_div {
+  position: absolute;
+  top: 7.6rem;
+  left: 18.4rem;
+  z-index: 10;
+}
+
+.info_div {
+  position: absolute;
+  top: 50%;
+  right: 1.6rem;
+  transform: translateY(-50%);
+  z-index: 10;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  width: fit-content;
+  height: fit-content;
+  padding: 1.6rem;
+  border-radius: 0.6rem;
+  border: 0.1rem solid #11315d;
+  background-color: #ffffff;
+  color: #11315d;
+  font-size: 1.6rem;
+}

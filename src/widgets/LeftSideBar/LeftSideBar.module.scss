@@ -1,0 +1,17 @@
+.leftsidebar {
+  width: 6.8rem;
+  height: 100%;
+  min-height: 100%;
+  border-radius: 1.6rem;
+  border: 0.1rem solid rgb(34, 106, 205, 0.5);
+  box-shadow: 0 0.5rem 2rem rgb(0, 99, 233, 0.05);
+  overflow: hidden;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: inherit;
+}

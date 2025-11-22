@@ -9,9 +9,17 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@lexical/react": "^0.38.2",
+    "clsx": "^2.1.1",
+    "lexical": "^0.38.2",
+    "motion": "^12.23.24",
     "next": "16.0.3",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "saas": "^1.0.0",
+    "sass": "^1.94.2",
+    "scss": "^0.2.4",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@types/node": "^20",

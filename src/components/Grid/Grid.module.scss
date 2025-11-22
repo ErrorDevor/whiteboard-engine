@@ -1,0 +1,27 @@
+.grid {
+  position: relative;
+  overflow: auto;
+  display: flex;
+  gap: 1.2rem;
+  padding: 2rem;
+  box-sizing: border-box;
+  width: 100%;
+  align-items: flex-start;
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.col_item {
+  width: 100%;
+  break-inside: avoid;
+}

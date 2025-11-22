@@ -1,0 +1,45 @@
+.frame_group {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.6rem;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+.frame_rect {
+  stroke: rgba(17, 49, 93, 0.4);
+  stroke-width: 1;
+}
+
+.overlay {
+  stroke: rgba(35, 130, 255, 1);
+  stroke-width: 2;
+  fill: rgba(35, 130, 255, 0.2);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.corner {
+  width: 1.6rem;
+  height: 1.6rem;
+  stroke: #2382ff;
+  stroke-width: 0.2rem;
+  fill: #fff; 
+  cursor: nwse-resize; 
+}
+
+.corner-top-left {
+  cursor: nwse-resize; 
+}
+
+.corner-top-right {
+  cursor: nesw-resize; 
+}
+
+.corner-bottom-left {
+  cursor: nesw-resize; 
+}
+
+.corner-bottom-right {
+  cursor: nwse-resize;
+}

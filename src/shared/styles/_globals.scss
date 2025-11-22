@@ -1,0 +1,23 @@
+html,
+body {
+  padding: 0;
+  margin: 0;
+  height: 100%;
+}
+
+html {
+  font-size: 62.5%;
+
+  @media screen and (min-width: 2000px) {
+    font-size: 0.48vw;
+  }
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #ffffff;
+  font-family: var(--font-lausanne-pan);
+  font-size: 1.6rem;
+}
