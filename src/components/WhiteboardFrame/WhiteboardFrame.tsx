@@ -4,9 +4,9 @@ import React, { useRef, useState, useEffect } from "react";
 
 import { FrameGroup } from "../FrameGroup/FrameGroup";
 import { Grid } from "../Grid/Grid";
-import { TextBlock, TextBlockData } from "../TextBlock/TextBlock";
 import { CursorIcon } from "@/shared/ui/ui-kit/CursorIcon/CursorIcon";
 import { SelectionBox } from "@/shared/ui/components/Selection/SelectionBox";
+import { AddText } from "../AddText/AddText";
 import {
   usePanScale,
   useSelect,
@@ -44,10 +44,7 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
     hideIcon,
   } = useCursor(svgRef);
 
-  const [textBlocks, setTextBlocks] = useState<TextBlockData[]>([]);
   const isAddingText = useUiState((s) => s.isAddingText);
-  const setIsAddingText = useUiState((s) => s.setIsAddingText);
-  const { setActiveTool } = useUiState();
   const { setSelectedId } = useUiState();
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
@@ -108,65 +105,13 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
     backgroundSize: "24px 24px",
   };
 
-  const addTextClick = (e: React.MouseEvent<HTMLDivElement>) => {
-  setActiveTool(0);
-
-  // если клик пришёлся внутрь существующего текстового блока — не трогаем ничего
-  const path = (e.nativeEvent as any).composedPath?.() || [];
-  const clickedInTextBlock = path.some((node: any) =>
-    node?.classList?.contains?.(css.text_block)
-  );
-
-  // Если клик вне блока — удалить пустые блоки, чтобы не накапливались
-  if (!clickedInTextBlock) {
-    setTextBlocks((prev) => prev.filter((b) => (b.text || "").trim() !== ""));
-  }
-
-  if (!isAddingText) return;
-  if (!svgRef.current || !containerRef.current) return;
-
-  const rect = svgRef.current.getBoundingClientRect();
-  const x = (e.clientX - rect.left - pan.x) / scale;
-  const y = (e.clientY - rect.top - pan.y) / scale;
-
-  const newBlock: TextBlockData = {
-    id: Date.now(),
-    x,
-    y,
-    text: "",
-    isEditing: true, // <-- сразу в режим редактирования
-  };
-
-  setTextBlocks((prev) => [...prev, newBlock]);
-  setIsAddingText(false);
-};
-
-
-  const handleFinishText = (id: number, data: TextBlockData) => {
-    const text = data.text || "";
-
-    if (!text.trim()) {
-      setTextBlocks((prev) => prev.filter((b) => b.id !== id));
-      setIsAddingText(false);
-      return;
-    }
-
-    setTextBlocks((prev) =>
-      prev.map((b) => (b.id === id ? { ...b, ...data } : b))
-    );
-  };
-
   useEffect(() => {
     if (isAddingText) showIcon("/icons/add-text-cursor.svg");
     else hideIcon();
   }, [isAddingText, showIcon, hideIcon]);
 
   return (
-    <div
-      className={css.whiteboard_wrapper}
-      ref={containerRef}
-      onClick={addTextClick}
-    >
+    <div className={css.whiteboard_wrapper} ref={containerRef}>
       <svg
         ref={svgRef}
         className={css.whiteboard}
@@ -216,26 +161,7 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
       </svg>
 
       <div className={css.text_layer} id="text_canvas">
-        {textBlocks.map((block) => (
-  <TextBlock
-    key={block.id}
-    block={block}
-    autoFocus={!!block.isEditing}
-    onFinish={(data) => handleFinishText(block.id, data)}
-    onRequestClose={() => {
-      // вспомогательный коллбек: удалить пустой блок если нужно
-      setTextBlocks((prev) => prev.filter((b) => b.id !== block.id || (b.text || "").trim() !== ""));
-    }}
-    style={{
-      pointerEvents: "auto",
-      position: "absolute",
-      top: block.y * scale + pan.y,
-      left: block.x * scale + pan.x,
-      transformOrigin: "top left",
-    }}
-  />
-))}
-
+        <AddText x={200} y={300} />
 
         {icon && (
           <CursorIcon

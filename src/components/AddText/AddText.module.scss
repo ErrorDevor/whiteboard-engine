@@ -1,0 +1,51 @@
+.text_block {
+  position: absolute;
+}
+
+.editor_container {
+  position: relative;
+  width: fit-content;
+  min-width: 53.6rem;
+  height: fit-content;
+  min-height: 10rem;
+  //   background: white;
+  border: 0.1rem dashed rgba(17, 49, 93, 0.1);
+  border-radius: 1.6rem;
+  pointer-events: auto;
+  user-select: text;
+  color: #11315D;
+}
+
+.toolbar_plugin {
+  top: -4.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.editor_inner {
+  position: relative;
+}
+
+.editor_input {
+  min-height: 15rem;
+  resize: none;
+  font-size: 1.6rem;
+  position: relative;
+  tab-size: 1;
+  outline: 0;
+  padding: 1.6rem 2rem;
+  caret-color: #11315D;
+}
+
+.editor_placeholder {
+  color: #11315D;
+  overflow: hidden;
+  position: absolute;
+  text-overflow: ellipsis;
+  top: 1.6rem;
+  left: 2rem;
+  font-size: 1.6rem;
+  user-select: none;
+  display: inline-block;
+  pointer-events: none;
+}

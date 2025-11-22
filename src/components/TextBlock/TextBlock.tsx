@@ -244,58 +244,42 @@ export const TextBlock: React.FC<TextBlockProps> = ({
         </div>
       </div>
 
-      <div
-        style={{
-          fontSize,
-          color,
-          fontWeight: bold ? "700" : "400",
-          fontStyle: italic ? "italic" : "normal",
-          textAlign: align as any,
-        }}
-      >
+      <div className={css.editor_container}>
         <LexicalComposer
           initialConfig={{
             namespace: `text-${block.id}`,
             theme: {},
             onError: console.error,
-            editorState: text
-              ? text
-              : () => {
-                  const root = $getRoot();
-                  const paragraph = $createParagraphNode();
-                  paragraph.append($createTextNode(""));
-                  root.append(paragraph);
-                },
+            editorState: () => {
+              const root = $getRoot();
+              const paragraph = $createParagraphNode();
+              paragraph.append($createTextNode(block.text || ""));
+              root.append(paragraph);
+            },
           }}
         >
           <OnChangePlugin
-            onChange={(editorState) => {
+            onChange={(editorState) =>
               editorState.read(() => {
                 const json = editorState.toJSON();
                 const raw = json.root?.children
                   ?.map((c: any) => c.text || "")
                   .join("\n");
                 setText(raw || "");
-              });
-            }}
+              })
+            }
           />
-
           <ContentEditable
-            ref={(r) => {
-              if (r) editorRef.current = (r as any)._editor;
-            }}
+            className={css.content_editable}
             onBlur={handleBlur}
+            autoFocus={autoFocus}
             onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                if (!text.trim()) onRequestClose?.();
-                (e.target as HTMLElement).blur();
-              }
+              if (e.key === "Escape" && !text.trim()) onRequestClose?.();
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 (e.target as HTMLElement).blur();
               }
             }}
-            className={css.content_editable}
           />
         </LexicalComposer>
       </div>
