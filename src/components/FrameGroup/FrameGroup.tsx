@@ -51,6 +51,9 @@ export const FrameGroup: React.FC<FrameGroupProps> = ({
   const [spacePressed, setSpacePressed] = useState(false);
   const sizeInitialized = useRef(false);
 
+  const baseStroke = selectedId === id ? 2 : 1;
+  const visualStroke = Math.max(8, (baseStroke / scale) * 2);
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) =>
       e.code === "Space" && setSpacePressed(true);
@@ -73,6 +76,7 @@ export const FrameGroup: React.FC<FrameGroupProps> = ({
 
     setSelectedId(id);
   };
+  
   useDragFrame({ id, scale, selectedIds });
 
   return (
@@ -104,6 +108,8 @@ export const FrameGroup: React.FC<FrameGroupProps> = ({
       <rect
         className={clsx(css.frame_rect, { [css.overlay]: selectedId === id })}
         fill="none"
+        vectorEffect="non-scaling-stroke"
+        strokeWidth={visualStroke}
         rx={6}
         width={size.width}
         height={size.height}

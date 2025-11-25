@@ -17,6 +17,13 @@ import { whiteboardState, useUiState } from "@/utils/store";
 
 import css from "./WhiteboardFrame.module.scss";
 
+type TextBlock = {
+  id: number;
+  x: number;
+  y: number;
+  isEmpty: boolean;
+};
+
 interface FrameData {
   id: string;
   src: string;
@@ -44,8 +51,12 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
     hideIcon,
   } = useCursor(svgRef);
 
+  const [activeTextId, setActiveTextId] = useState<number | null>(null);
   const isAddingText = useUiState((s) => s.isAddingText);
-  const { setSelectedId } = useUiState();
+  const setIsAddingText = useUiState((s) => s.setIsAddingText);
+  const { setSelectedId, setActiveTool } = useUiState();
+
+  const [texts, setTexts] = useState<TextBlock[]>([]);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
   const [mounted, setMounted] = useState(false);
@@ -110,8 +121,45 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
     else hideIcon();
   }, [isAddingText, showIcon, hideIcon]);
 
+  const addTextClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    setActiveTool(0);
+
+    if (!isAddingText) return;
+    if (!svgRef.current || !containerRef.current) return;
+
+    const rect = svgRef.current.getBoundingClientRect();
+
+    const x = (e.clientX - rect.left - pan.x) / scale;
+    const y = (e.clientY - rect.top - pan.y) / scale;
+    const id = Date.now();
+    setTexts((prev) => [...prev, { id, x, y, isEmpty: true }]);
+    setActiveTextId(id);
+    setIsAddingText(false);
+  };
+
+  const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isAddingText) {
+      addTextClick(e);
+      return;
+    }
+
+    const target = e.target as HTMLElement;
+    const isTextBlockClick = !!target.closest("[data-add-text]");
+    if (isTextBlockClick) return;
+
+    if (!target.closest("[data-add-text]")) {
+      setActiveTextId(null);
+    }
+
+    setTexts((prev) => prev.filter((t) => !t.isEmpty));
+  };
+
   return (
-    <div className={css.whiteboard_wrapper} ref={containerRef}>
+    <div
+      className={css.whiteboard_wrapper}
+      ref={containerRef}
+      onClick={handleCanvasClick}
+    >
       <svg
         ref={svgRef}
         className={css.whiteboard}
@@ -161,7 +209,22 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
       </svg>
 
       <div className={css.text_layer} id="text_canvas">
-        <AddText x={200} y={300} />
+        {texts.map((t) => (
+          <AddText
+            key={t.id}
+            id={t.id}
+            x={t.x * scale + pan.x}
+            y={t.y * scale + pan.y}
+            isEmpty={t.isEmpty}
+            onTextEmptyChange={(isEmpty) => {
+              setTexts((prev) =>
+                prev.map((p) => (p.id === t.id ? { ...p, isEmpty } : p))
+              );
+            }}
+            activeTextId={activeTextId}
+            setActiveTextId={setActiveTextId}
+          />
+        ))}
 
         {icon && (
           <CursorIcon

@@ -8,11 +8,17 @@ import { mergeRegister } from "@lexical/utils";
 import {
   $getSelection,
   $isRangeSelection,
+  $isTextNode,
   COMMAND_PRIORITY_LOW,
   FORMAT_ELEMENT_COMMAND,
   FORMAT_TEXT_COMMAND,
   SELECTION_CHANGE_COMMAND,
+  createCommand,
 } from "lexical";
+import {
+  INSERT_UNORDERED_LIST_COMMAND,
+  INSERT_ORDERED_LIST_COMMAND,
+} from "@lexical/list";
 import {
   FONT_STYLES,
   INITIAL_COLOR,
@@ -27,14 +33,30 @@ export type ToolbarProps = {
   className?: string;
 };
 
+export const SET_FONT_SIZE_COMMAND = createCommand<number>();
+export const SET_FONT_COLOR_COMMAND = createCommand<string>();
+export const SET_UNDERLINE_COMMAND = createCommand<void>();
+
+export const SET_PAPERCLIP_COMMAND = createCommand<void>();
+export const SET_TEXT_BLOCK_COMMAND = createCommand<void>();
+export const SET_FONT_LIST_COMMAND = createCommand<void>();
+export const SET_FONT_LIST2_COMMAND = createCommand<void>();
+
 export const Toolbar: React.FC<ToolbarProps> = ({ className }) => {
   const [editor] = useLexicalComposerContext();
   const toolbarRef = useRef(null);
+
+  const [fontSize, setFontSize] = useState(INITIAL_FONT_SIZE);
+  const [color, setColor] = useState(INITIAL_COLOR);
+
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
-  const [color, setColor] = useState(INITIAL_COLOR);
-  const [fontSize, setFontSize] = useState(INITIAL_FONT_SIZE);
+  const [isPaperclipActive, setPaperclipActive] = useState(false);
+  const [isTextBlockActive, setTextBlockActive] = useState(false);
+  const [isFontListActive, setFontListActive] = useState(false);
+  const [isFontList2Active, setFontList2Active] = useState(false);
+
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [fontStyleLabel, setFontStyleLabel] = useState(
     FONT_STYLES.find((s) => s.size === fontSize)?.label || "Body Text"
@@ -45,9 +67,30 @@ export const Toolbar: React.FC<ToolbarProps> = ({ className }) => {
     if ($isRangeSelection(selection)) {
       setIsBold(selection.hasFormat("bold"));
       setIsItalic(selection.hasFormat("italic"));
-      setIsUnderline(selection.hasFormat("underline"));
+
+      const nodes = selection.getNodes();
+      for (const node of nodes) {
+        if ($isTextNode(node)) {
+          const style = node.getStyle() || "";
+          const fsMatch = style.match(/font-size:\s*([0-9.]+)px/);
+          if (fsMatch) {
+            const parsed = parseInt(fsMatch[1], 10);
+            setFontSize(parsed);
+            setFontStyleLabel(
+              FONT_STYLES.find((s) => s.size === parsed)?.label ||
+                fontStyleLabel
+            );
+          }
+          const colorMatch = style.match(/color:\s*([^;]+)/);
+          if (colorMatch) {
+            const parsedColor = colorMatch[1].trim();
+            setColor(parsedColor);
+          }
+          break;
+        }
+      }
     }
-  }, []);
+  }, [fontStyleLabel]);
 
   useEffect(() => {
     return mergeRegister(
@@ -64,6 +107,112 @@ export const Toolbar: React.FC<ToolbarProps> = ({ className }) => {
         (_payload, _newEditor) => {
           $updateToolbar();
           return false;
+        },
+        COMMAND_PRIORITY_LOW
+      ),
+      editor.registerCommand(
+        SET_FONT_SIZE_COMMAND,
+        (size) => {
+          editor.update(() => {
+            const selection = $getSelection();
+            if (!$isRangeSelection(selection)) return;
+
+            const nodes = selection.getNodes();
+
+            nodes.forEach((node) => {
+              if ($isTextNode(node)) {
+                const prevStyle = node.getStyle();
+                const cleaned = prevStyle
+                  .split(";")
+                  .filter((s) => !s.trim().startsWith("font-size"))
+                  .join(";");
+
+                node.setStyle(`${cleaned}; font-size: ${size}px`);
+              }
+            });
+          });
+
+          return true;
+        },
+        COMMAND_PRIORITY_LOW
+      ),
+      editor.registerCommand(
+        SET_FONT_COLOR_COMMAND,
+        (col) => {
+          editor.update(() => {
+            const selection = $getSelection();
+            if (!$isRangeSelection(selection)) return;
+
+            const nodes = selection.getNodes();
+
+            nodes.forEach((node) => {
+              if ($isTextNode(node)) {
+                const prevStyle = node.getStyle();
+                const cleaned = prevStyle
+                  .split(";")
+                  .filter((s) => !s.trim().startsWith("color"))
+                  .join(";");
+
+                node.setStyle(`${cleaned}; color: ${col}`);
+              }
+            });
+          });
+
+          return true;
+        },
+        COMMAND_PRIORITY_LOW
+      ),
+      editor.registerCommand(
+        SET_UNDERLINE_COMMAND,
+        () => {
+          editor.update(() => {
+            const selection = $getSelection();
+            if (!$isRangeSelection(selection)) return;
+
+            const nodes = selection.getNodes();
+            nodes.forEach((node) => {
+              if ($isTextNode(node)) {
+                const prevStyle = node.getStyle() || "";
+                const hasUnderline = prevStyle.includes(
+                  "text-decoration: underline"
+                );
+                const cleaned = prevStyle
+                  .split(";")
+                  .filter((s) => !s.trim().startsWith("text-decoration"))
+                  .join(";");
+                node.setStyle(
+                  `${cleaned}${
+                    hasUnderline ? "" : "; text-decoration: underline"
+                  }`
+                );
+              }
+            });
+          });
+          return true;
+        },
+        COMMAND_PRIORITY_LOW
+      ),
+      editor.registerCommand(
+        SET_FONT_LIST_COMMAND,
+        () => {
+          editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
+
+          setFontListActive((v) => !v);
+          setFontList2Active(false);
+
+          return true;
+        },
+        COMMAND_PRIORITY_LOW
+      ),
+      editor.registerCommand(
+        SET_FONT_LIST2_COMMAND,
+        () => {
+          editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
+
+          setFontList2Active((v) => !v);
+          setFontListActive(false);
+
+          return true;
         },
         COMMAND_PRIORITY_LOW
       )
@@ -98,6 +247,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ className }) => {
                 onClick={() => {
                   setFontStyleLabel(item.label);
                   setFontSize(item.size);
+                  editor.dispatchCommand(SET_FONT_SIZE_COMMAND, item.size);
                   setDropdownOpen(false);
                 }}
               >
@@ -123,7 +273,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({ className }) => {
           <input
             type="color"
             value={color}
-            onChange={(e) => setColor(e.target.value)}
+            onChange={(e) => {
+              const col = e.target.value;
+              setColor(col);
+              editor.dispatchCommand(SET_FONT_COLOR_COMMAND, col);
+            }}
             className={css.hidden_color_input}
           />
         </div>
@@ -131,9 +285,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ className }) => {
 
       <div className={clsx(css.mini_panel, css.text_decoration_panel)}>
         <button
-          onClick={() => {
-            editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
-          }}
+          onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
           className={clsx(css.decoration_button, isBold && css.active)}
         >
           <Image.Default
@@ -143,9 +295,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ className }) => {
         </button>
 
         <button
-          onClick={() => {
-            editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
-          }}
+          onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}
           className={clsx(css.decoration_button, isItalic && css.active)}
         >
           <Image.Default
@@ -156,7 +306,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({ className }) => {
 
         <button
           onClick={() => {
-            editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline");
+            editor.dispatchCommand(SET_UNDERLINE_COMMAND, undefined);
+            setIsUnderline((v) => !v);
           }}
           className={clsx(css.decoration_button, isUnderline && css.active)}
         >
@@ -166,28 +317,56 @@ export const Toolbar: React.FC<ToolbarProps> = ({ className }) => {
           />
         </button>
 
-        <button className={css.decoration_button}>
+        <button
+          onClick={() => setPaperclipActive((v) => !v)}
+          className={clsx(
+            css.decoration_button,
+            isPaperclipActive && css.active
+          )}
+        >
           <Image.Default
             src="/icons/paperclip.svg"
             className={css.decor_icon}
           />
         </button>
 
-        <button className={css.decoration_button}>
+        <button
+          onClick={() => setTextBlockActive((v) => !v)}
+          className={clsx(
+            css.decoration_button,
+            isTextBlockActive && css.active
+          )}
+        >
           <Image.Default
             src="/icons/text-block.svg"
             className={css.decor_icon}
           />
         </button>
 
-        <button className={css.decoration_button}>
+        <button
+          onClick={() =>
+            editor.dispatchCommand(SET_FONT_LIST_COMMAND, undefined)
+          }
+          className={clsx(
+            css.decoration_button,
+            isFontListActive && css.active
+          )}
+        >
           <Image.Default
             src="/icons/font-list.svg"
             className={css.decor_icon}
           />
         </button>
 
-        <button className={css.decoration_button}>
+        <button
+          onClick={() =>
+            editor.dispatchCommand(SET_FONT_LIST2_COMMAND, undefined)
+          }
+          className={clsx(
+            css.decoration_button,
+            isFontList2Active && css.active
+          )}
+        >
           <Image.Default
             src="/icons/font-list-2.svg"
             className={css.decor_icon}

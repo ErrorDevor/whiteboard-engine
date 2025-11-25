@@ -51,7 +51,7 @@ export function useCursor(
 
   useEffect(() => {
     if (activeTool === 0 || !isAddingText) {
-      setPosition({ x: 0, y: 0 });
+      setPosition({ x: -140, y: 40 });
       setIcon(null);
     }
   }, [activeTool, isAddingText, setPosition]);

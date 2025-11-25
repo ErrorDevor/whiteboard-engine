@@ -6,20 +6,33 @@
   position: relative;
   width: fit-content;
   min-width: 53.6rem;
+  min-height: 15rem;
   height: fit-content;
-  min-height: 10rem;
-  //   background: white;
   border: 0.1rem dashed rgba(17, 49, 93, 0.1);
   border-radius: 1.6rem;
   pointer-events: auto;
   user-select: text;
-  color: #11315D;
+  color: #11315d;
+  transition: border-color 0.25s ease, opacity 0.25s ease, min-height 0.25s ease;
+}
+
+.applied {
+  border-color: rgba(17, 49, 93, 0);
+  min-height: 0 !important;
 }
 
 .toolbar_plugin {
   top: -4.6rem;
   left: 50%;
   transform: translateX(-50%);
+  opacity: 1;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.applied .toolbar_plugin {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-1rem);
+  pointer-events: none;
 }
 
 .editor_inner {
@@ -27,18 +40,19 @@
 }
 
 .editor_input {
-  min-height: 15rem;
+  min-height: 0;
+  height: auto;
   resize: none;
   font-size: 1.6rem;
   position: relative;
   tab-size: 1;
   outline: 0;
   padding: 1.6rem 2rem;
-  caret-color: #11315D;
+  caret-color: #11315d;
 }
 
 .editor_placeholder {
-  color: #11315D;
+  color: #11315d;
   overflow: hidden;
   position: absolute;
   text-overflow: ellipsis;

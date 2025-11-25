@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import clsx from "clsx";
 import { Toolbar } from "@/shared/ui/components/Toolbar/Toolbar";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
@@ -22,16 +23,27 @@ import {
   ParagraphNode,
   TextNode,
 } from "lexical";
+import { ListNode, ListItemNode } from "@lexical/list";
 
-import { parseAllowedColor, parseAllowedFontSize, PLACEHOLDER } from "./lib/styleConfig";
+import {
+  parseAllowedColor,
+  parseAllowedFontSize,
+  PLACEHOLDER,
+} from "./lib/styleConfig";
+import { whiteboardState } from "@/utils/store";
+
 import css from "./AddText.module.scss";
 
 interface AddTextProps {
   className?: string;
   style?: React.CSSProperties;
-  id?: number;
+  id: number;
   x?: number;
   y?: number;
+  isEmpty: boolean;
+  onTextEmptyChange?: (isEmpty: boolean, localText: string) => void;
+  activeTextId: number | null;
+  setActiveTextId: React.Dispatch<React.SetStateAction<number | null>>;
 }
 
 const removeStylesExportDOM = (
@@ -125,10 +137,42 @@ const editorConfig = {
     import: constructImportMap(),
   },
   namespace: "React.js Demo",
-  nodes: [ParagraphNode, TextNode],
+  nodes: [ParagraphNode, TextNode, ListNode, ListItemNode],
+  editorState: () => {
+    const paragraph = new ParagraphNode();
+    paragraph.append(new TextNode(""));
+    return paragraph;
+  },
   onError(error: Error) {
     throw error;
   },
+};
+
+const TextStateWatcher: React.FC<{
+  onChange?: (empty: boolean) => void;
+  onText?: (text: string) => void;
+}> = ({ onChange, onText }) => {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    const unregister = editor.registerUpdateListener(({ editorState }) => {
+      editorState.read(() => {
+        // root DOM element (встроенный метод — безопасно для plain text)
+        const root = editor.getRootElement();
+        const textContent = root?.textContent ?? "";
+        const isEmpty = textContent.trim() === "";
+
+        onChange?.(isEmpty);
+        onText?.(textContent);
+      });
+    });
+
+    return () => {
+      unregister();
+    };
+  }, [editor, onChange, onText]);
+
+  return null;
 };
 
 export const AddText: React.FC<AddTextProps> = ({
@@ -137,35 +181,102 @@ export const AddText: React.FC<AddTextProps> = ({
   id,
   x,
   y,
+  isEmpty,
+  onTextEmptyChange,
+  activeTextId,
+  setActiveTextId,
 }) => {
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const isActive = activeTextId === id;
+  const applied = !isEmpty && !isActive;
+
+  const updateTextBlock = whiteboardState((s) => s.updateTextBlock);
+  const getTextBlock = whiteboardState((s) => s.getTextBlock);
+  const [localText, setLocalText] = useState<string>("");
+
+  useEffect(() => {
+    const tb = getTextBlock(String(id));
+    if (tb) setLocalText(tb.text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+      }
+    };
+
+    el.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      el.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
+
   return (
     <div
-      className={clsx(css.text_block, className)}
+      ref={rootRef}
+      data-add-text={id ?? true}
+      className={clsx(css.text_block, className, {
+        filled: !isEmpty,
+      })}
       style={{
         top: y,
         left: x,
         ...style,
+        pointerEvents: "auto",
       }}
+      onMouseDown={() => setActiveTextId(id)}
     >
       <LexicalComposer initialConfig={editorConfig}>
-        <div className={css.editor_container}>
-          <Toolbar className={css.toolbar_plugin} />
+        <TextStateWatcher
+          onChange={(empty) => onTextEmptyChange?.(empty, localText)}
+          onText={(text) => setLocalText(text)}
+        />
+
+        <div
+          className={clsx(css.editor_container, {
+            [css.applied]: applied,
+          })}
+        >
+          <Toolbar
+            className={clsx(css.toolbar_plugin, { [css.hidden]: applied })}
+          />
 
           <div className={css.editor_inner}>
             <RichTextPlugin
               contentEditable={
                 <ContentEditable
-                  className={css.editor_input}
+                  className={clsx(css.editor_input, {
+                    [css.readonly]: applied,
+                  })}
+                  readOnly={applied}
                   aria-placeholder={PLACEHOLDER}
                   placeholder={
                     <div className={css.editor_placeholder}>{PLACEHOLDER}</div>
                   }
+                  onBlur={() => {
+                    try {
+                      updateTextBlock(String(id), { text: localText });
+                      onTextEmptyChange?.(localText.trim() === "", localText);
+                      console.log("AddText onBlur: saving", { id, localText });
+                    } catch (err) {
+                      console.error(
+                        "AddText: updateTextBlock failed on blur",
+                        err
+                      );
+                    }
+                  }}
                 />
               }
               ErrorBoundary={LexicalErrorBoundary}
             />
             <HistoryPlugin />
-            <AutoFocusPlugin />
+            {!applied && <AutoFocusPlugin />}
           </div>
         </div>
       </LexicalComposer>
