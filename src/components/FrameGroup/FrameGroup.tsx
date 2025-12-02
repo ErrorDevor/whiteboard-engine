@@ -80,10 +80,8 @@ export const FrameGroup: React.FC<FrameGroupProps> = ({
     if (spacePressed || e.button === 1) return;
 
     if (ctrlPressed) {
-      // Ctrl зажат — переключаем выделение этого фрейма
       toggleSelect?.(id);
     } else {
-      // Обычный клик — выделяем только этот фрейм
       selectOne?.(id);
     }
 
@@ -93,7 +91,6 @@ export const FrameGroup: React.FC<FrameGroupProps> = ({
   useDragFrame({ id, scale, selectedIds });
 
   /**/
-
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) setCtrlPressed(true);
