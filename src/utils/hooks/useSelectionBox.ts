@@ -26,10 +26,8 @@ export function useSelectionBox({ getFrameRects, onSelect }: UseSelectionBoxProp
 
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     const { isDragging } = whiteboardState.getState().selection;
-    const { isResizing } = whiteboardState.getState();
 
     if (isDragging) return;
-    if (isResizing) return;
 
     if ((e.target as HTMLElement).closest(".frame_group")) return;
     if (e.button !== 0) return;

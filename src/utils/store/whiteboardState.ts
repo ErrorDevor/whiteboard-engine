@@ -1,4 +1,3 @@
-// src/utils/store/whiteboardState.ts
 import { create } from "zustand";
 
 export interface FrameSelection {
@@ -32,9 +31,11 @@ interface WhiteboardState {
 
   textBlocks: Record<string, TextBlock>;
   addTextBlock: (pos: { x: number; y: number }) => string;
-  updateTextBlock: (id: string, data: Partial<TextBlock>) => void;
+  updateTextBlock: (id: string, data: { x?: number; y?: number; text?: string; isEmpty?: boolean }) => void
+
   removeTextBlock: (id: string) => void;
   getTextBlock: (id: string) => TextBlock | null;
+  getAllTextBlocks: () => Record<string, TextBlock>;
 }
 
 const loadSavedPan = (): { x: number; y: number } => {
@@ -147,4 +148,5 @@ export const whiteboardState = create<WhiteboardState>((set, get) => ({
   },
 
   getTextBlock: (id: string) => get().textBlocks[id] ?? null,
+  getAllTextBlocks: () => get().textBlocks,
 }));

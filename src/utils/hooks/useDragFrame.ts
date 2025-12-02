@@ -45,7 +45,6 @@ export const useDragFrame = ({
     const onPointerDown = (e: PointerEvent) => {
       if (e.ctrlKey || e.metaKey || e.shiftKey) return;
       if (spacePressed.current || e.button === 1) return;
-      if (whiteboardState.getState().isResizing) return;
 
       whiteboardState.getState().setSelectionDragging(true);
       isDragging.current = true;
@@ -64,7 +63,6 @@ export const useDragFrame = ({
 
     const onPointerMove = (e: PointerEvent) => {
       if (!isDragging.current) return;
-      if (whiteboardState.getState().isResizing) return;
 
       const dx = (e.clientX - start.current.x) / scale;
       const dy = (e.clientY - start.current.y) / scale;

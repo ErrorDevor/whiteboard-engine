@@ -39,7 +39,7 @@ export const FrameGroup: React.FC<FrameGroupProps> = ({
     }
   }, [id, x, y]);
 
-  const pos = whiteboardState((s) => s.framePositions[id]);
+  const pos = whiteboardState((s) => s.framePositions[id] ?? { x, y });
 
   const maxWidth = 400;
   const [size, setSize] = useState<{ width: number; height: number }>({
