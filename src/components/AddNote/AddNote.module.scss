@@ -1,0 +1,83 @@
+.add_note_block {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: fit-content;
+}
+
+.note_block {
+  position: relative;
+  width: 36.2rem;
+  height: 20rem;
+  border-radius: 1.2rem;
+  pointer-events: auto;
+  user-select: text;
+  color: rgba(17, 49, 93, 0.7);
+  background-color: #e3e6ef;
+  z-index: 10;
+}
+
+.add_note_tooltip {
+  top: 2.4rem;
+  left: 20%;
+  transform: translateY(-50%);
+}
+
+.tip_show {
+  opacity: 1;
+  transform: translateY(-50%);
+}
+
+.tip_hide {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.divider {
+  width: 0.3rem;
+  height: 9.5rem;
+  background-color: rgba(17, 49, 93, 0.5);
+  border-radius: 10rem;
+  z-index: 10;
+}
+
+.image_block {
+  position: relative;
+  width: fit-content;
+  min-width: 40rem;
+  height: 20rem;
+  padding: 1.3rem 1.1rem;
+  border-radius: 1.2rem;
+  border: 0.1rem dashed rgba(17, 49, 93, 0.1);
+  z-index: 10;
+}
+
+.editor_inner {
+  position: relative;
+}
+
+.editor_input {
+  min-height: 0;
+  height: auto;
+  resize: none;
+  font-size: 1.6rem;
+  position: relative;
+  tab-size: 1;
+  outline: 0;
+  padding: 1.6rem 2rem;
+  caret-color: #11315d;
+}
+
+.editor_placeholder {
+  color: rgba(17, 49, 93, 0.7);
+  overflow: hidden;
+  position: absolute;
+  text-overflow: ellipsis;
+  top: 1.6rem;
+  left: 2rem;
+  font-size: 1.6rem;
+  user-select: none;
+  display: inline-block;
+  pointer-events: none;
+}

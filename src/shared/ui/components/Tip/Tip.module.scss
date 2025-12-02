@@ -1,0 +1,44 @@
+.tip_block {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 1.2rem 2.2rem 1.9rem 1.9rem;
+  width: fit-content;
+  height: fit-content;
+  border-radius: 1.6rem;
+  border: 0.1rem solid #f8f8f8;
+  background-color: rgba(17, 49, 93, 0.8);
+  box-shadow: 0 0 1.2rem 0 rgba(0, 0, 0, 0.05);
+  color: #ffffff;
+  backdrop-filter: blur(8rem);
+  z-index: 11;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -0.8rem;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 0.8rem solid transparent;
+    border-bottom: 0.8rem solid transparent;
+    border-right: 0.8rem solid rgba(17, 49, 93, 0.8);
+  }
+
+  h5 {
+    font-size: 1.6rem;
+    line-height: normal;
+    letter-spacing: 0;
+    font-weight: 500;
+  }
+
+  p {
+    max-width: 20rem;
+    font-size: 1.4rem;
+    letter-spacing: 0%;
+    line-height: 1.6rem;
+    font-weight: 300;
+  }
+}

@@ -47,6 +47,12 @@ export const ActionBar: React.FC<ActionBarProps> = ({ className }) => {
               onClick={() => {
                 setActiveTool(index);
 
+                if (index === 2) {
+                  useUiState.getState().setIsAddingNote(true);
+                } else {
+                  useUiState.getState().setIsAddingNote(false);
+                }
+
                 if (index === 3) {
                   useUiState.getState().setIsAddingText(true);
                 } else {

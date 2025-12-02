@@ -36,6 +36,8 @@ interface WhiteboardState {
   removeTextBlock: (id: string) => void;
   getTextBlock: (id: string) => TextBlock | null;
   getAllTextBlocks: () => Record<string, TextBlock>;
+
+  removeNoteBlock: (id: string) => void;
 }
 
 const loadSavedPan = (): { x: number; y: number } => {
@@ -149,4 +151,13 @@ export const whiteboardState = create<WhiteboardState>((set, get) => ({
 
   getTextBlock: (id: string) => get().textBlocks[id] ?? null,
   getAllTextBlocks: () => get().textBlocks,
+
+  // Note blocks
+  removeNoteBlock: (id: string) => {
+    const blocks = { ...get().textBlocks };
+    if (!(id in blocks)) return;
+    delete blocks[id];
+    localStorage.setItem("noteBlocks", JSON.stringify(blocks));
+    set({ textBlocks: blocks });
+  },
 }));

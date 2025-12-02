@@ -14,8 +14,7 @@ import {
   useCursor,
   useSelectionBox,
 } from "@/utils/hooks";
-import { whiteboardState } from "@/utils/store";
-import { useUiState } from "@/utils/store/uiState";
+import { whiteboardState, useUiState } from "@/utils/store";
 
 import css from "./WhiteboardFrame.module.scss";
 
@@ -77,6 +76,12 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
   const [texts, setTexts] = useState<TextBlock[]>([]);
   const [activeTextId, setActiveTextId] = useState<number | null>(null);
 
+  /* --- notes state --- */
+  const isAddingNote = useUiState((s) => s.isAddingNote);
+  const setIsAddingNote = useUiState((s) => s.setIsAddingNote);
+  const [notes, setNotes] = useState<TextBlock[]>([]);
+  const [activeNoteId, setActiveNoteId] = useState<number | null>(null);
+
   useEffect(() => {
     const state = whiteboardState.getState();
 
@@ -120,6 +125,7 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
     else hideIcon();
   }, [isAddingText, showIcon, hideIcon]);
 
+  /* --- Click to add text (existing behavior) --- */
   const clickAddText = (e: React.MouseEvent<SVGRectElement, MouseEvent>) => {
     e.stopPropagation();
     if (!svgRef.current) return;
@@ -130,16 +136,22 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
     const id = Date.now();
     const newBlock = { id, x, y, isEmpty: true };
 
-    whiteboardState.getState().updateTextBlock(String(id), {
-      text: "",
-      x,
-      y,
-      isEmpty: true,
-    });
+    // persist
+    try {
+      whiteboardState.getState().updateTextBlock(String(id), {
+        text: "",
+        x,
+        y,
+        isEmpty: true,
+      });
+    } catch (err) {
+      // если метод отсутствует, просто продолжаем — но лучше иметь реализацию в store
+    }
 
     setTexts((prev) => [...prev, newBlock]);
     setActiveTextId(id);
 
+    // фокус редактора (двойная попытка, как и раньше)
     setTimeout(() => {
       const sel = document.querySelector(
         `[data-add-text="${id}"] [data-editor-input="true"]`
@@ -180,42 +192,64 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
     }
   };
 
-  /*Add Note*/
-  const isAddingNote = useUiState((s) => s.isAddingNote);
-  const setIsAddingNote = useUiState((s) => s.setIsAddingNote);
-  const [notes, setNotes] = useState<TextBlock[]>([]);
-  const [activeNoteId, setActiveNoteId] = useState<number | null>(null);
+  /* === AddNote: create immediately at cursor position when isAddingNote === */
+  useEffect(() => {
+    // create a note immediately when isAddingNote becomes true and we have svgRef
+    if (!isAddingNote || !svgRef.current) return;
 
-  function CreateNoteOnce() {
-    useEffect(() => {
-      const id = Date.now();
-      const x = 0;
-      const y = 0;
-      const newBlock = { id, x, y, isEmpty: true };
+    const rect = svgRef.current.getBoundingClientRect();
+    // position may be null if cursor hook didn't set it; fallback to center of svg
+    const clientX = position?.x ?? (rect.left + rect.width / 2);
+    const clientY = position?.y ?? (rect.top + rect.height / 2);
 
-      setNotes((prev) => [...prev, newBlock]);
-      setActiveNoteId(id);
+    const x = (clientX - rect.left - pan.x) / scale;
+    const y = (clientY - rect.top - pan.y) / scale;
+    const id = Date.now();
+    const newBlock = { id, x, y, isEmpty: true };
 
-      const tryFocus = () => {
-        const sel = document.querySelector(
+    // persist note data to whiteboardState (analogично текстовым методам)
+    try {
+      whiteboardState.getState().updateNoteBlock(String(id), {
+        content: "",
+        x,
+        y,
+        isEmpty: true,
+      });
+    } catch (err) {
+      // если такого метода нет в store — желательно добавить аналог updateTextBlock
+    }
+
+    setNotes((prev) => [...prev, newBlock]);
+    setActiveNoteId(id);
+
+    // focus the editor inside AddNote (AddNote uses data-id={id} and [data-editor-input="true"])
+    setTimeout(() => {
+      const sel = document.querySelector(
+        `[data-id="${id}"] [data-editor-input="true"]`
+      ) as HTMLElement | null;
+      if (sel) {
+        try {
+          sel.focus();
+        } catch (e) {}
+      }
+      setTimeout(() => {
+        const sel2 = document.querySelector(
           `[data-id="${id}"] [data-editor-input="true"]`
         ) as HTMLElement | null;
-        if (sel) {
+        if (sel2) {
           try {
-            sel.focus();
+            sel2.focus();
           } catch (e) {}
         }
-      };
+      }, 50);
+    }, 0);
 
-      setTimeout(tryFocus, 0);
-      setTimeout(tryFocus, 50);
+    // finished adding note — выключаем режим добавления и активируем инструмент по умолчанию
+    setIsAddingNote(false);
+    setActiveTool(0);
 
-      setIsAddingNote(false);
-      setActiveTool(0);
-    }, []);
-
-    return null;
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAddingNote]); // зависимость — только флаг isAddingNote (пан/скейл/позиция читаются внутри)
 
   const clickRemoveNote = (id: number) => {
     setNotes((prev) => prev.filter((t) => t.id !== id));
@@ -245,13 +279,7 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
         onClick={(e) => {
-          if (e.target === svgRef.current) {
-            clickActivateTextBlock(e);
-          }
-
-          if (e.target === svgRef.current) {
-            clickActivateNoteBlock(e);
-          }
+          if (e.target === svgRef.current) clickActivateTextBlock(e);
 
           if (e.target === svgRef.current && e.button !== 1) {
             clearSelection();
@@ -324,6 +352,32 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
         );
       })}
 
+      {notes.map((n) => {
+        const data = whiteboardState.getState().getNoteBlock
+          ? whiteboardState.getState().getNoteBlock(String(n.id))
+          : undefined;
+
+        return (
+          <AddNote
+            key={n.id}
+            id={n.id}
+            x={(data?.x ?? n.x) * scale + pan.x}
+            y={(data?.y ?? n.y) * scale + pan.y}
+            active={activeNoteId === n.id}
+            // handlers (AddNote должен принимать эти props — если в текущей реализации их нет,
+            // можно добавить аналогично AddText)
+            onRemove={clickRemoveNote}
+            onActivate={(id: number) => setActiveNoteId(id)}
+            onDeactivate={(id: number) => {
+              setActiveNoteId((cur) => {
+                const next = cur === id ? null : cur;
+                return next;
+              });
+            }}
+          />
+        );
+      })}
+
       {icon && position && (
         <CursorIcon
           iconSrc={icon.src}
@@ -333,20 +387,6 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
           }}
         />
       )}
-
-      {isAddingNote && <CreateNoteOnce />}
-
-      {notes.map((note) => {
-        return (
-          <AddNote
-            key={note.id}
-            id={note.id}
-            active={activeNoteId === note.id}
-            onRemove={clickRemoveNote}
-            style={{ top: "12rem", left: "18.4rem" }}
-          />
-        );
-      })}
     </div>
   );
 };

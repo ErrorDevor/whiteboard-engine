@@ -9,6 +9,9 @@ interface UiState {
 
   isAddingText: boolean;          
   setIsAddingText: (value: boolean) => void;
+
+  isAddingNote: boolean;          
+  setIsAddingNote: (value: boolean) => void;
 }
 
 export const useUiState = create<UiState>((set) => ({
@@ -20,4 +23,7 @@ export const useUiState = create<UiState>((set) => ({
 
   isAddingText: false,
   setIsAddingText: (value) => set({ isAddingText: value }),
+
+  isAddingNote: false,
+  setIsAddingNote: (value) => set({ isAddingNote: value }),
 }));
