@@ -18,6 +18,8 @@ interface FrameGroupProps {
   scale?: number;
   selectedIds?: string[];
   onMeasured?: (id: string, height: number) => void;
+  selectOne?: (id: string) => void; 
+  toggleSelect?: (id: string) => void;
 }
 
 export const FrameGroup: React.FC<FrameGroupProps> = ({
@@ -29,6 +31,8 @@ export const FrameGroup: React.FC<FrameGroupProps> = ({
   scale = 1,
   selectedIds,
   onMeasured,
+  selectOne,
+  toggleSelect
 }) => {
   const gRef = useRef<SVGGElement | null>(null);
 
@@ -49,6 +53,7 @@ export const FrameGroup: React.FC<FrameGroupProps> = ({
 
   const { selectedId, setSelectedId } = useUiState();
   const [spacePressed, setSpacePressed] = useState(false);
+  const [ctrlPressed, setCtrlPressed] = useState(false);
   const sizeInitialized = useRef(false);
 
   const baseStroke = selectedId === id ? 2 : 1;
@@ -74,10 +79,37 @@ export const FrameGroup: React.FC<FrameGroupProps> = ({
 
     if (spacePressed || e.button === 1) return;
 
+    if (ctrlPressed) {
+      // Ctrl зажат — переключаем выделение этого фрейма
+      toggleSelect?.(id);
+    } else {
+      // Обычный клик — выделяем только этот фрейм
+      selectOne?.(id);
+    }
+
     setSelectedId(id);
   };
-  
+
   useDragFrame({ id, scale, selectedIds });
+
+  /**/
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) setCtrlPressed(true);
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (!e.ctrlKey && !e.metaKey) setCtrlPressed(false);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, []);
 
   return (
     <g
@@ -106,7 +138,7 @@ export const FrameGroup: React.FC<FrameGroupProps> = ({
       )}
 
       <rect
-        className={clsx(css.frame_rect, { [css.overlay]: selectedId === id })}
+        className={clsx(css.frame_rect, { [css.overlay]: selectedIds?.includes(id) })}
         fill="none"
         vectorEffect="non-scaling-stroke"
         strokeWidth={visualStroke}

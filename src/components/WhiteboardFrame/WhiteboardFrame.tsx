@@ -56,7 +56,14 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
     height: 200,
   }));
 
-  const { clearSelection } = useSelect();
+  const {
+    selectedIds: selectedSet,
+    selectOne,
+    toggleSelect,
+    clearSelection,
+  } = useSelect();
+  const selectedIds = Array.from(selectedSet);
+
   const { selectionBox, onMouseDown, onMouseMove, onMouseUp } = useSelectionBox(
     {
       getFrameRects: () =>
@@ -274,6 +281,9 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
                   y={0}
                   scale={scale}
                   src={f.src}
+                  selectedIds={selectedIds}
+                  selectOne={selectOne}
+                  toggleSelect={toggleSelect}
                 />
               ))}
             </Grid>
