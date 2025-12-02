@@ -19,6 +19,7 @@ import {
   INSERT_UNORDERED_LIST_COMMAND,
   INSERT_ORDERED_LIST_COMMAND,
 } from "@lexical/list";
+import { $isListNode } from "@lexical/list";
 import {
   FONT_STYLES,
   INITIAL_COLOR,
@@ -62,32 +63,71 @@ export const Toolbar: React.FC<ToolbarProps> = ({ className }) => {
     FONT_STYLES.find((s) => s.size === fontSize)?.label || "Body Text"
   );
 
+  const findAncestorListNode = (node: any) => {
+    let cur = node;
+    while (cur) {
+      if ($isListNode(cur)) return cur;
+      cur = cur.getParent ? cur.getParent() : null;
+    }
+    return null;
+  };
+
   const $updateToolbar = useCallback(() => {
     const selection = $getSelection();
-    if ($isRangeSelection(selection)) {
-      setIsBold(selection.hasFormat("bold"));
-      setIsItalic(selection.hasFormat("italic"));
 
-      const nodes = selection.getNodes();
-      for (const node of nodes) {
-        if ($isTextNode(node)) {
-          const style = node.getStyle() || "";
-          const fsMatch = style.match(/font-size:\s*([0-9.]+)px/);
-          if (fsMatch) {
-            const parsed = parseInt(fsMatch[1], 10);
-            setFontSize(parsed);
-            setFontStyleLabel(
-              FONT_STYLES.find((s) => s.size === parsed)?.label ||
-                fontStyleLabel
-            );
-          }
-          const colorMatch = style.match(/color:\s*([^;]+)/);
-          if (colorMatch) {
-            const parsedColor = colorMatch[1].trim();
-            setColor(parsedColor);
-          }
-          break;
+    if (!$isRangeSelection(selection)) {
+      setFontListActive(false);
+      setFontList2Active(false);
+      return;
+    }
+
+    setIsBold(selection.hasFormat("bold"));
+    setIsItalic(selection.hasFormat("italic"));
+
+    const nodes = selection.getNodes();
+
+    try {
+      const anchorNode = selection.anchor.getNode();
+      const listNode = findAncestorListNode(anchorNode);
+
+      if (listNode) {
+        const type = listNode.getListType ? listNode.getListType() : null;
+        if (type === "bullet") {
+          setFontListActive(true);
+          setFontList2Active(false);
+        } else if (type === "number") {
+          setFontListActive(false);
+          setFontList2Active(true);
+        } else {
+          setFontListActive(false);
+          setFontList2Active(false);
         }
+      } else {
+        setFontListActive(false);
+        setFontList2Active(false);
+      }
+    } catch (err) {
+      setFontListActive(false);
+      setFontList2Active(false);
+    }
+
+    for (const node of nodes) {
+      if ($isTextNode(node)) {
+        const style = node.getStyle() || "";
+        const fsMatch = style.match(/font-size:\s*([0-9.]+)px/);
+        if (fsMatch) {
+          const parsed = parseInt(fsMatch[1], 10);
+          setFontSize(parsed);
+          setFontStyleLabel(
+            FONT_STYLES.find((s) => s.size === parsed)?.label || fontStyleLabel
+          );
+        }
+        const colorMatch = style.match(/color:\s*([^;]+)/);
+        if (colorMatch) {
+          const parsedColor = colorMatch[1].trim();
+          setColor(parsedColor);
+        }
+        break;
       }
     }
   }, [fontStyleLabel]);

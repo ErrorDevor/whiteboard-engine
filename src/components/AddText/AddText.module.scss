@@ -65,3 +65,17 @@
   display: inline-block;
   pointer-events: none;
 }
+
+.editor_inner ol,
+.editor_inner ul {
+  margin-left: 1rem;
+  list-style-position: inside;
+}
+
+.editor_inner ul {
+  list-style-type: disc;
+}
+
+.editor_inner ol {
+  list-style-type: decimal;
+}

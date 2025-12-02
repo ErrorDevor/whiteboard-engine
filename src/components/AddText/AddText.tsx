@@ -11,6 +11,7 @@ import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { ParagraphNode, TextNode, $getRoot } from "lexical";
 import { ListNode, ListItemNode } from "@lexical/list";
+import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 
 import { PLACEHOLDER } from "./lib/styleConfig";
 import { Toolbar } from "@/shared/ui/components/Toolbar/Toolbar";
@@ -151,6 +152,7 @@ export const AddText: React.FC<AddTextProps> = ({
               ErrorBoundary={LexicalErrorBoundary}
             />
             <HistoryPlugin />
+            <ListPlugin /> 
             {active && <AutoFocusPlugin />}
           </div>
         </div>
