@@ -5,6 +5,8 @@ export interface FrameSelection {
   isDragging: boolean;
   selectionRect: { x: number; y: number; width: number; height: number } | null;
   pointerButton?: number;
+  isSelectBox: boolean;
+  isDraggingFrame: boolean;
 }
 
 export type TextBlock = {
@@ -18,6 +20,8 @@ interface WhiteboardState {
   clearSelection: () => void;
   setSelection: (ids: string[]) => void;
   setSelectionDragging: (isDragging: boolean) => void;
+  setSelectionBoxActive: (active: boolean) => void;
+  setDraggingFrame: (dragging: boolean) => void;
 
   pan: { x: number; y: number };
   setPan: (pan: { x: number; y: number }) => void;
@@ -34,7 +38,10 @@ interface WhiteboardState {
 
   textBlocks: Record<string, TextBlock>;
   addTextBlock: (pos: { x: number; y: number }) => string;
-  updateTextBlock: (id: string, data: { x?: number; y?: number; text?: string; isEmpty?: boolean }) => void
+  updateTextBlock: (
+    id: string,
+    data: { x?: number; y?: number; text?: string; isEmpty?: boolean }
+  ) => void;
 
   removeTextBlock: (id: string) => void;
   getTextBlock: (id: string) => TextBlock | null;
@@ -84,9 +91,11 @@ export const whiteboardState = create<WhiteboardState>((set, get) => ({
     selectedIds: new Set<string>(),
     isDragging: false,
     selectionRect: null,
+    isSelectBox: false,
+    isDraggingFrame: false,
   },
 
-   isPanning: false,
+  isPanning: false,
   setIsPanning: (p: boolean) => set({ isPanning: p }),
 
   setSelectionDragging: (isDragging: boolean) =>
@@ -102,6 +111,16 @@ export const whiteboardState = create<WhiteboardState>((set, get) => ({
   setSelection: (ids: string[]) =>
     set((state) => ({
       selection: { ...state.selection, selectedIds: new Set<string>(ids) },
+    })),
+
+  setSelectionBoxActive: (active: boolean) =>
+    set((state) => ({
+      selection: { ...state.selection, isSelectBox: active },
+    })),
+
+  setDraggingFrame: (dragging: boolean) =>
+    set((state) => ({
+      selection: { ...state.selection, isDraggingFrame: dragging },
     })),
 
   pan: loadSavedPan(),

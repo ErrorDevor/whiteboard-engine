@@ -47,6 +47,7 @@ export const useDragFrame = ({
       if (spacePressed.current || e.button === 1) return;
 
       whiteboardState.getState().setSelectionDragging(true);
+      whiteboardState.getState().setDraggingFrame(true);
       isDragging.current = true;
 
       const framePos = whiteboardState.getState().getFramePosition(id) ?? {
@@ -97,6 +98,7 @@ export const useDragFrame = ({
       isDragging.current = false;
 
       whiteboardState.getState().setSelectionDragging(false);
+      whiteboardState.getState().setDraggingFrame(false);
 
       try {
         elem.releasePointerCapture?.(e.pointerId);

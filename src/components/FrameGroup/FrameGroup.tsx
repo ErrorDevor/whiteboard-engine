@@ -51,13 +51,8 @@ export const FrameGroup: React.FC<FrameGroupProps> = ({
     height: maxWidth,
   });
 
-  const { selectedId, setSelectedId } = useUiState();
   const [spacePressed, setSpacePressed] = useState(false);
-  // const [ctrlPressed, setCtrlPressed] = useState(false);
   const sizeInitialized = useRef(false);
-
-  const baseStroke = selectedId === id ? 2 : 1;
-  const visualStroke = Math.max(8, (baseStroke / scale) * 2);
 
   const isPanning = whiteboardState((s) => s.isPanning);
 
@@ -76,40 +71,7 @@ export const FrameGroup: React.FC<FrameGroupProps> = ({
     };
   }, []);
 
-  /*можно наверно убрать*/
-  // const handlePointerDown = (e: React.PointerEvent) => {
-  //   e.stopPropagation();
-
-  //   if (spacePressed || e.button === 1) return;
-
-  //   if (ctrlPressed) {
-  //     toggleSelect?.(id);
-  //   } else {
-  //     selectOne?.(id);
-  //   }
-
-  //   setSelectedId(id);
-  // };
-
-  useDragFrame({ id, scale, selectedIds });
-
-  /*можно наверно убрать*/
-  // useEffect(() => {
-  //   const onKeyDown = (e: KeyboardEvent) => {
-  //     if (e.ctrlKey || e.metaKey) setCtrlPressed(true);
-  //   };
-  //   const onKeyUp = (e: KeyboardEvent) => {
-  //     if (!e.ctrlKey && !e.metaKey) setCtrlPressed(false);
-  //   };
-
-  //   window.addEventListener("keydown", onKeyDown);
-  //   window.addEventListener("keyup", onKeyUp);
-
-  //   return () => {
-  //     window.removeEventListener("keydown", onKeyDown);
-  //     window.removeEventListener("keyup", onKeyUp);
-  //   };
-  // }, []);
+  // useDragFrame({ id, scale, selectedIds });
 
   return (
     <g
@@ -123,7 +85,6 @@ export const FrameGroup: React.FC<FrameGroupProps> = ({
         if (e.ctrlKey || e.metaKey) toggleSelect?.(id);
         else selectOne?.(id);
       }}
-      // onPointerDown={handlePointerDown} можно наверно убрать
     >
       {src && (
         <foreignObject x={0} y={0} width={size.width} height={size.height}>
@@ -149,7 +110,6 @@ export const FrameGroup: React.FC<FrameGroupProps> = ({
         })}
         fill="none"
         vectorEffect="non-scaling-stroke"
-        strokeWidth={visualStroke}
         rx={6}
         width={size.width}
         height={size.height}

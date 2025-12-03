@@ -4,13 +4,13 @@ import React, { useRef, useState, useEffect } from "react";
 
 import { FrameGroup } from "../FrameGroup/FrameGroup";
 import { Grid } from "../Grid/Grid";
+// import { AddText } from "../AddText/AddText";
+// import { AddNote } from "../AddNote/AddNote";
+// import { CursorIcon } from "@/shared/ui/ui-kit/CursorIcon/CursorIcon";
 
-import { AddText } from "../AddText/AddText";
-import { AddNote } from "../AddNote/AddNote";
-import { CursorIcon } from "@/shared/ui/ui-kit/CursorIcon/CursorIcon";
 import { usePanScale, useCursor } from "@/utils/hooks";
 import { whiteboardState } from "@/utils/store";
-import { useUiState } from "@/utils/store/uiState";
+// import { useUiState } from "@/utils/store/uiState";
 
 import {
   Box,
@@ -44,9 +44,9 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   const { setGrab, setGrabbing, setDefault } = useCursor(svgRef);
- const { setActiveTool } = useUiState();
+//   const { setActiveTool } = useUiState();
+
   const isPanning = whiteboardState((s) => s.isPanning);
-  const isDraggingFrame = whiteboardState((s) => s.selection.isDraggingFrame);
 
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
@@ -100,130 +100,130 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
   };
 
   /*Add Text*/
-  const isAddingText = useUiState((s) => s.isAddingText);
-  const setIsAddingText = useUiState((s) => s.setIsAddingText);
-  const [texts, setTexts] = useState<TextBlock[]>([]);
-  const [activeTextId, setActiveTextId] = useState<number | null>(null);
-  const { icon, position, showIcon, hideIcon } = useCursor(svgRef);
+//   const isAddingText = useUiState((s) => s.isAddingText);
+//   const setIsAddingText = useUiState((s) => s.setIsAddingText);
+//   const [texts, setTexts] = useState<TextBlock[]>([]);
+//   const [activeTextId, setActiveTextId] = useState<number | null>(null);
+//   const { icon, position, showIcon, hideIcon } = useCursor(svgRef);
 
-  useEffect(() => {
-    if (isAddingText) showIcon("/icons/add-text-cursor.svg");
-    else hideIcon();
-  }, [isAddingText, showIcon, hideIcon]);
+//   useEffect(() => {
+//     if (isAddingText) showIcon("/icons/add-text-cursor.svg");
+//     else hideIcon();
+//   }, [isAddingText, showIcon, hideIcon]);
 
-  const clickAddText = (e: React.MouseEvent<SVGRectElement, MouseEvent>) => {
-    e.stopPropagation();
-    if (!svgRef.current) return;
+//   const clickAddText = (e: React.MouseEvent<SVGRectElement, MouseEvent>) => {
+//     e.stopPropagation();
+//     if (!svgRef.current) return;
 
-    const rect = svgRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left - pan.x) / scale;
-    const y = (e.clientY - rect.top - pan.y) / scale;
-    const id = Date.now();
-    const newBlock = { id, x, y, isEmpty: true };
+//     const rect = svgRef.current.getBoundingClientRect();
+//     const x = (e.clientX - rect.left - pan.x) / scale;
+//     const y = (e.clientY - rect.top - pan.y) / scale;
+//     const id = Date.now();
+//     const newBlock = { id, x, y, isEmpty: true };
 
-    whiteboardState.getState().updateTextBlock(String(id), {
-      text: "",
-      x,
-      y,
-      isEmpty: true,
-    });
+//     whiteboardState.getState().updateTextBlock(String(id), {
+//       text: "",
+//       x,
+//       y,
+//       isEmpty: true,
+//     });
 
-    setTexts((prev) => [...prev, newBlock]);
-    setActiveTextId(id);
+//     setTexts((prev) => [...prev, newBlock]);
+//     setActiveTextId(id);
 
-    setTimeout(() => {
-      const sel = document.querySelector(
-        `[data-add-text="${id}"] [data-editor-input="true"]`
-      ) as HTMLElement | null;
-      if (sel) {
-        try {
-          sel.focus();
-        } catch (e) {}
-      }
-      setTimeout(() => {
-        const sel2 = document.querySelector(
-          `[data-add-text="${id}"] [data-editor-input="true"]`
-        ) as HTMLElement | null;
-        if (sel2) {
-          try {
-            sel2.focus();
-          } catch (e) {}
-        }
-      }, 50);
-    }, 0);
+//     setTimeout(() => {
+//       const sel = document.querySelector(
+//         `[data-add-text="${id}"] [data-editor-input="true"]`
+//       ) as HTMLElement | null;
+//       if (sel) {
+//         try {
+//           sel.focus();
+//         } catch (e) {}
+//       }
+//       setTimeout(() => {
+//         const sel2 = document.querySelector(
+//           `[data-add-text="${id}"] [data-editor-input="true"]`
+//         ) as HTMLElement | null;
+//         if (sel2) {
+//           try {
+//             sel2.focus();
+//           } catch (e) {}
+//         }
+//       }, 50);
+//     }, 0);
 
-    setIsAddingText(false);
-    setActiveTool(0);
-  };
+//     setIsAddingText(false);
+//     setActiveTool(0);
+//   };
 
-  const clickRemoveBlock = (id: number) => {
-    setTexts((prev) => prev.filter((t) => t.id !== id));
+//   const clickRemoveBlock = (id: number) => {
+//     setTexts((prev) => prev.filter((t) => t.id !== id));
 
-    try {
-      whiteboardState.getState().removeTextBlock(String(id));
-    } catch (e) {}
-    if (activeTextId === id) setActiveTextId(null);
-  };
+//     try {
+//       whiteboardState.getState().removeTextBlock(String(id));
+//     } catch (e) {}
+//     if (activeTextId === id) setActiveTextId(null);
+//   };
 
-  const clickActivateTextBlock = (e: React.MouseEvent) => {
-    if (e.target === svgRef.current) {
-      setActiveTextId(null);
-    }
-  };
+//   const clickActivateTextBlock = (e: React.MouseEvent) => {
+//     if (e.target === svgRef.current) {
+//       setActiveTextId(null);
+//     }
+//   };
 
   /*Add Note*/
-  const isAddingNote = useUiState((s) => s.isAddingNote);
-  const setIsAddingNote = useUiState((s) => s.setIsAddingNote);
-  const [notes, setNotes] = useState<TextBlock[]>([]);
-  const [activeNoteId, setActiveNoteId] = useState<number | null>(null);
+//   const isAddingNote = useUiState((s) => s.isAddingNote);
+//   const setIsAddingNote = useUiState((s) => s.setIsAddingNote);
+//   const [notes, setNotes] = useState<TextBlock[]>([]);
+//   const [activeNoteId, setActiveNoteId] = useState<number | null>(null);
 
-  function ClickAddNote() {
-    useEffect(() => {
-      const id = Date.now();
-      const x = 0;
-      const y = 0;
-      const newBlock = { id, x, y, isEmpty: true };
+//   function ClickAddNote() {
+//     useEffect(() => {
+//       const id = Date.now();
+//       const x = 0;
+//       const y = 0;
+//       const newBlock = { id, x, y, isEmpty: true };
 
-      setNotes((prev) => [...prev, newBlock]);
-      setActiveNoteId(id);
+//       setNotes((prev) => [...prev, newBlock]);
+//       setActiveNoteId(id);
 
-      const tryFocus = () => {
-        const sel = document.querySelector(
-          `[data-id="${id}"] [data-editor-input="true"]`
-        ) as HTMLElement | null;
-        if (sel) {
-          try {
-            sel.focus();
-          } catch (e) {}
-        }
-      };
+//       const tryFocus = () => {
+//         const sel = document.querySelector(
+//           `[data-id="${id}"] [data-editor-input="true"]`
+//         ) as HTMLElement | null;
+//         if (sel) {
+//           try {
+//             sel.focus();
+//           } catch (e) {}
+//         }
+//       };
 
-      setTimeout(tryFocus, 0);
-      setTimeout(tryFocus, 50);
+//       setTimeout(tryFocus, 0);
+//       setTimeout(tryFocus, 50);
 
-      setIsAddingNote(false);
-      setActiveTool(0);
-    }, []);
+//       setIsAddingNote(false);
+//       setActiveTool(0);
+//     }, []);
 
-    return null;
-  }
+//     return null;
+//   }
 
-  const clickRemoveNote = (id: number) => {
-    setNotes((prev) => prev.filter((t) => t.id !== id));
+//   const clickRemoveNote = (id: number) => {
+//     setNotes((prev) => prev.filter((t) => t.id !== id));
 
-    try {
-      whiteboardState.getState().removeNoteBlock(String(id));
-    } catch (e) {}
-    if (activeNoteId === id) setActiveNoteId(null);
-  };
+//     try {
+//       whiteboardState.getState().removeNoteBlock(String(id));
+//     } catch (e) {}
+//     if (activeNoteId === id) setActiveNoteId(null);
+//   };
 
-  const clickActivateNoteBlock = (e: React.MouseEvent) => {
-    if (e.target === svgRef.current) {
-      setActiveNoteId(null);
-    }
-  };
+//   const clickActivateNoteBlock = (e: React.MouseEvent) => {
+//     if (e.target === svgRef.current) {
+//       setActiveNoteId(null);
+//     }
+//   };
 
-  /*Selection*/
+  /**/
   const [selectedFrames, setSelectedFrames] = useState<string[]>([]);
   const frameRects = useRef<Record<string, Box>>({});
   const svgWrapperRef = useRef<HTMLDivElement | null>(null);
@@ -234,14 +234,11 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
     h: number;
   }>(null);
 
-  const { selection, setSelectionBoxActive } = whiteboardState();
-
   const { DragSelection } = useSelectionContainer({
     eventsElement: svgWrapperRef.current ?? undefined,
 
     onSelectionStart: () => {
-      setSelectionBox(null);
-      setSelectionBoxActive(true);
+      setSelectionBox(null); // → очистить старую рамку
     },
 
     onSelectionChange: (box) => {
@@ -251,11 +248,11 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
         left: box.left + window.scrollX,
       };
 
+      // === преобразуем рамку в DOM-координаты для hit-test ===
       const svgRect = svgRef.current?.getBoundingClientRect();
-      if (!svgRect) {
-        return;
-      }
+      if (!svgRect) return;
 
+      // координаты рамки в DOM
       const selectionDOM = {
         top: scrollAwareBox.top,
         left: scrollAwareBox.left,
@@ -264,24 +261,13 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
       };
 
       const hit: string[] = [];
-      frameObjects.forEach((f) => {
-        const el = document.getElementById(f.id);
-        if (!el) return;
-
-        const r = el.getBoundingClientRect();
-        const rect = {
-          top: r.top,
-          left: r.left,
-          width: r.width,
-          height: r.height,
-        };
-        if (boxesIntersect(selectionDOM, rect)) {
-          hit.push(f.id);
-        }
+      Object.entries(frameRects.current).forEach(([id, rect]) => {
+        if (boxesIntersect(selectionDOM, rect)) hit.push(id);
       });
 
       setSelectedFrames(hit);
 
+      // === координаты для SVG визуальной рамки ===
       const x = scrollAwareBox.left - svgRect.left;
       const y = scrollAwareBox.top - svgRect.top;
 
@@ -317,44 +303,7 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
     });
 
     frameRects.current = rects;
-    console.log("frameRects:", rects);
-  }, [pan, scale, frames.length, texts.length, notes.length]);
-
-  const multiSelectBox = React.useMemo(() => {
-    if (selectedFrames.length <= 1) return null;
-
-    const svgRect = svgRef.current?.getBoundingClientRect();
-    if (!svgRect) return null;
-
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-
-    selectedFrames.forEach((id) => {
-      const rect = document.getElementById(id)?.getBoundingClientRect();
-      if (!rect) return;
-
-      const xInSvg = rect.left - svgRect.left;
-      const yInSvg = rect.top - svgRect.top;
-      const width = rect.width;
-      const height = rect.height;
-
-      minX = Math.min(minX, xInSvg);
-      minY = Math.min(minY, yInSvg);
-      maxX = Math.max(maxX, xInSvg + width);
-      maxY = Math.max(maxY, yInSvg + height);
-    });
-
-    if (minX === Infinity) return null;
-
-    return {
-      x: minX,
-      y: minY,
-      width: maxX - minX,
-      height: maxY - minY,
-    };
-  }, [selectedFrames, pan, scale]);
+  }, [pan, scale ]); //, texts.length,notes.length, frames.length
 
   return (
     <div className={css.whiteboard_wrapper} ref={svgWrapperRef}>
@@ -370,14 +319,9 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
         onClick={(e) => {
           if (isPanning) return;
 
-          if (selection.isSelectBox) {
-            setSelectionBoxActive(false);
-            return;
-          }
-
           if (e.target === svgRef.current) {
-            clickActivateTextBlock(e);
-            clickActivateNoteBlock(e);
+            // clickActivateTextBlock(e);
+            // clickActivateNoteBlock(e);
             setSelectedFrames([]);
           }
         }}
@@ -412,7 +356,7 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
           </g>
         )}
 
-        {isAddingText && svgRef.current && (
+        {/* {isAddingText && svgRef.current && (
           <rect
             x={0}
             y={0}
@@ -422,9 +366,9 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
             pointerEvents="all"
             onClick={clickAddText}
           />
-        )}
+        )} */}
 
-        {selectionBox && !isDraggingFrame && (
+        {selectionBox && (
           <rect
             x={selectionBox.x}
             y={selectionBox.y}
@@ -437,23 +381,9 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
             strokeWidth={1}
           />
         )}
-
-        {multiSelectBox && !isDraggingFrame && (
-          <rect
-            x={multiSelectBox.x}
-            y={multiSelectBox.y}
-            width={multiSelectBox.width}
-            height={multiSelectBox.height}
-            fill="rgba(0,120,215,0.1)"
-            stroke="rgba(0,120,215,0.9)"
-            rx={2}
-            strokeWidth={1}
-            pointerEvents="none"
-          />
-        )}
       </svg>
 
-      {texts.map((t) => {
+      {/* {texts.map((t) => {
         const data = whiteboardState.getState().getTextBlock(String(t.id));
 
         return (
@@ -473,9 +403,9 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
             }}
           />
         );
-      })}
+      })} */}
 
-      {icon && position && (
+      {/* {icon && position && (
         <CursorIcon
           iconSrc={icon.src}
           style={{
@@ -497,7 +427,7 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
             style={{ top: "12rem", left: "18.4rem" }}
           />
         );
-      })}
+      })} */}
     </div>
   );
 };
