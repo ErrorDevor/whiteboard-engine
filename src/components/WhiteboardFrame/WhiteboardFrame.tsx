@@ -1,21 +1,22 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
+
 import { FrameGroup } from "../FrameGroup/FrameGroup";
 import { Grid } from "../Grid/Grid";
-import { SelectionBox } from "@/shared/ui/components/Selection/SelectionBox";
 import { AddText } from "../AddText/AddText";
 import { AddNote } from "../AddNote/AddNote";
 import { CursorIcon } from "@/shared/ui/ui-kit/CursorIcon/CursorIcon";
 
-import {
-  usePanScale,
-  useSelect,
-  useCursor,
-  useSelectionBox,
-} from "@/utils/hooks";
+import { usePanScale, useCursor } from "@/utils/hooks";
 import { whiteboardState } from "@/utils/store";
 import { useUiState } from "@/utils/store/uiState";
+
+import {
+  Box,
+  boxesIntersect,
+  useSelectionContainer,
+} from "@air/react-drag-to-select";
 
 import css from "./WhiteboardFrame.module.scss";
 
@@ -40,11 +41,12 @@ interface WhiteboardFrameProps {
 export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
   frames = [],
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   const { setGrab, setGrabbing, setDefault } = useCursor(svgRef);
-  const { setSelectedId } = useUiState();
+  const { setActiveTool } = useUiState();
+
+  const isPanning = whiteboardState((s) => s.isPanning);
 
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
@@ -56,34 +58,7 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
     height: 200,
   }));
 
-  const {
-    selectedIds: selectedSet,
-    selectOne,
-    toggleSelect,
-    clearSelection,
-  } = useSelect();
-  const selectedIds = Array.from(selectedSet);
-
-  const { selectionBox, onMouseDown, onMouseMove, onMouseUp } = useSelectionBox(
-    {
-      getFrameRects: () =>
-        frameObjects.map((f) => {
-          const el = document.getElementById(f.id);
-          const rect = el
-            ? el.getBoundingClientRect()
-            : new DOMRect(0, 0, f.width, f.height);
-          return { id: f.id, rect };
-        }),
-    }
-  );
-
-  const isAddingText = useUiState((s) => s.isAddingText);
-  const setIsAddingText = useUiState((s) => s.setIsAddingText);
-  const { icon, position, showIcon, hideIcon } = useCursor(svgRef);
-  const { setActiveTool } = useUiState();
-  const [texts, setTexts] = useState<TextBlock[]>([]);
-  const [activeTextId, setActiveTextId] = useState<number | null>(null);
-
+  /*Pan Scale Mounted Whiteboard*/
   useEffect(() => {
     const state = whiteboardState.getState();
 
@@ -114,6 +89,8 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
   });
 
   const canvasTransform = `translate(${pan.x}px, ${pan.y}px) scale(${scale})`;
+
+  /*Whiteboard Style*/
   const style = {
     userSelect: "none" as const,
     touchAction: "none" as const,
@@ -121,6 +98,13 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
       "radial-gradient(rgba(17,49,93,0.18) 0.15rem, transparent 0.15rem)",
     backgroundSize: "24px 24px",
   };
+
+  /*Add Text*/
+  const isAddingText = useUiState((s) => s.isAddingText);
+  const setIsAddingText = useUiState((s) => s.setIsAddingText);
+  const [texts, setTexts] = useState<TextBlock[]>([]);
+  const [activeTextId, setActiveTextId] = useState<number | null>(null);
+  const { icon, position, showIcon, hideIcon } = useCursor(svgRef);
 
   useEffect(() => {
     if (isAddingText) showIcon("/icons/add-text-cursor.svg");
@@ -193,7 +177,7 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
   const [notes, setNotes] = useState<TextBlock[]>([]);
   const [activeNoteId, setActiveNoteId] = useState<number | null>(null);
 
-  function CreateNoteOnce() {
+  function ClickAddNote() {
     useEffect(() => {
       const id = Date.now();
       const x = 0;
@@ -239,8 +223,92 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
     }
   };
 
+  /**/
+  const [selectedFrames, setSelectedFrames] = useState<string[]>([]);
+  const frameRects = useRef<Record<string, Box>>({});
+  const svgWrapperRef = useRef<HTMLDivElement | null>(null);
+  const [selectionBox, setSelectionBox] = useState<null | {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  }>(null);
+
+  const { DragSelection } = useSelectionContainer({
+    eventsElement: svgWrapperRef.current ?? undefined,
+
+    onSelectionStart: () => {
+      setSelectionBox(null); // → очистить старую рамку
+    },
+
+    onSelectionChange: (box) => {
+      const scrollAwareBox = {
+        ...box,
+        top: box.top + window.scrollY,
+        left: box.left + window.scrollX,
+      };
+
+      // === преобразуем рамку в DOM-координаты для hit-test ===
+      const svgRect = svgRef.current?.getBoundingClientRect();
+      if (!svgRect) return;
+
+      // координаты рамки в DOM
+      const selectionDOM = {
+        top: scrollAwareBox.top,
+        left: scrollAwareBox.left,
+        width: scrollAwareBox.width,
+        height: scrollAwareBox.height,
+      };
+
+      const hit: string[] = [];
+      Object.entries(frameRects.current).forEach(([id, rect]) => {
+        if (boxesIntersect(selectionDOM, rect)) hit.push(id);
+      });
+
+      setSelectedFrames(hit);
+
+      // === координаты для SVG визуальной рамки ===
+      const x = scrollAwareBox.left - svgRect.left;
+      const y = scrollAwareBox.top - svgRect.top;
+
+      setSelectionBox({
+        x,
+        y,
+        w: scrollAwareBox.width,
+        h: scrollAwareBox.height,
+      });
+    },
+
+    onSelectionEnd: () => {
+      setSelectionBox(null);
+    },
+
+    isEnabled: true,
+  });
+
+  useEffect(() => {
+    if (!svgWrapperRef.current) return;
+
+    const list = svgWrapperRef.current.querySelectorAll(`g.frame_group`);
+    const rects: Record<string, Box> = {};
+
+    list.forEach((el) => {
+      const r = el.getBoundingClientRect();
+      rects[el.id] = {
+        top: r.top,
+        left: r.left,
+        width: r.width,
+        height: r.height,
+      };
+    });
+
+    frameRects.current = rects;
+  }, [pan, scale, texts.length, notes.length, frames.length]);
+
   return (
-    <div className={css.whiteboard_wrapper} ref={containerRef}>
+    <div className={css.whiteboard_wrapper} ref={svgWrapperRef}>
+      <DragSelection />
+
       <svg
         ref={svgRef}
         className={css.whiteboard}
@@ -248,21 +316,13 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
         id="diagram"
         tabIndex={0}
         style={style}
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={onMouseUp}
         onClick={(e) => {
+          if (isPanning) return;
+
           if (e.target === svgRef.current) {
             clickActivateTextBlock(e);
-          }
-
-          if (e.target === svgRef.current) {
             clickActivateNoteBlock(e);
-          }
-
-          if (e.target === svgRef.current && e.button !== 1) {
-            clearSelection();
-            setSelectedId(null);
+            setSelectedFrames([]);
           }
         }}
       >
@@ -281,22 +341,19 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
                   y={0}
                   scale={scale}
                   src={f.src}
-                  selectedIds={selectedIds}
-                  selectOne={selectOne}
-                  toggleSelect={toggleSelect}
+                  selectedIds={selectedFrames}
+                  selectOne={(id) => setSelectedFrames([id])}
+                  toggleSelect={(id) =>
+                    setSelectedFrames((prev) =>
+                      prev.includes(id)
+                        ? prev.filter((x) => x !== id)
+                        : [...prev, id]
+                    )
+                  }
                 />
               ))}
             </Grid>
           </g>
-        )}
-
-        {selectionBox.visible && (
-          <SelectionBox
-            x={selectionBox.x}
-            y={selectionBox.y}
-            width={selectionBox.width}
-            height={selectionBox.height}
-          />
         )}
 
         {isAddingText && svgRef.current && (
@@ -308,6 +365,20 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
             fill="rgba(0,0,0,0)"
             pointerEvents="all"
             onClick={clickAddText}
+          />
+        )}
+
+        {selectionBox && (
+          <rect
+            x={selectionBox.x}
+            y={selectionBox.y}
+            width={selectionBox.w}
+            height={selectionBox.h}
+            fill="rgba(0,120,215,0.3)"
+            stroke="rgba(0,120,215,0.9)"
+            rx={4}
+            strokeDasharray={4}
+            strokeWidth={1}
           />
         )}
       </svg>
@@ -344,7 +415,7 @@ export const WhiteboardFrame: React.FC<WhiteboardFrameProps> = ({
         />
       )}
 
-      {isAddingNote && <CreateNoteOnce />}
+      {isAddingNote && <ClickAddNote />}
 
       {notes.map((note) => {
         return (

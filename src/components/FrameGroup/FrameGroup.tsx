@@ -18,7 +18,7 @@ interface FrameGroupProps {
   scale?: number;
   selectedIds?: string[];
   onMeasured?: (id: string, height: number) => void;
-  selectOne?: (id: string) => void; 
+  selectOne?: (id: string) => void;
   toggleSelect?: (id: string) => void;
 }
 
@@ -32,7 +32,7 @@ export const FrameGroup: React.FC<FrameGroupProps> = ({
   selectedIds,
   onMeasured,
   selectOne,
-  toggleSelect
+  toggleSelect,
 }) => {
   const gRef = useRef<SVGGElement | null>(null);
 
@@ -53,11 +53,13 @@ export const FrameGroup: React.FC<FrameGroupProps> = ({
 
   const { selectedId, setSelectedId } = useUiState();
   const [spacePressed, setSpacePressed] = useState(false);
-  const [ctrlPressed, setCtrlPressed] = useState(false);
+  // const [ctrlPressed, setCtrlPressed] = useState(false);
   const sizeInitialized = useRef(false);
 
   const baseStroke = selectedId === id ? 2 : 1;
   const visualStroke = Math.max(8, (baseStroke / scale) * 2);
+
+  const isPanning = whiteboardState((s) => s.isPanning);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) =>
@@ -74,39 +76,40 @@ export const FrameGroup: React.FC<FrameGroupProps> = ({
     };
   }, []);
 
-  const handlePointerDown = (e: React.PointerEvent) => {
-    e.stopPropagation();
+  /*можно наверно убрать*/
+  // const handlePointerDown = (e: React.PointerEvent) => {
+  //   e.stopPropagation();
 
-    if (spacePressed || e.button === 1) return;
+  //   if (spacePressed || e.button === 1) return;
 
-    if (ctrlPressed) {
-      toggleSelect?.(id);
-    } else {
-      selectOne?.(id);
-    }
+  //   if (ctrlPressed) {
+  //     toggleSelect?.(id);
+  //   } else {
+  //     selectOne?.(id);
+  //   }
 
-    setSelectedId(id);
-  };
+  //   setSelectedId(id);
+  // };
 
   useDragFrame({ id, scale, selectedIds });
 
-  /**/
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey) setCtrlPressed(true);
-    };
-    const onKeyUp = (e: KeyboardEvent) => {
-      if (!e.ctrlKey && !e.metaKey) setCtrlPressed(false);
-    };
+  /*можно наверно убрать*/
+  // useEffect(() => {
+  //   const onKeyDown = (e: KeyboardEvent) => {
+  //     if (e.ctrlKey || e.metaKey) setCtrlPressed(true);
+  //   };
+  //   const onKeyUp = (e: KeyboardEvent) => {
+  //     if (!e.ctrlKey && !e.metaKey) setCtrlPressed(false);
+  //   };
 
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
+  //   window.addEventListener("keydown", onKeyDown);
+  //   window.addEventListener("keyup", onKeyUp);
 
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
-    };
-  }, []);
+  //   return () => {
+  //     window.removeEventListener("keydown", onKeyDown);
+  //     window.removeEventListener("keyup", onKeyUp);
+  //   };
+  // }, []);
 
   return (
     <g
@@ -114,7 +117,13 @@ export const FrameGroup: React.FC<FrameGroupProps> = ({
       ref={gRef}
       id={id}
       transform={`translate(${pos.x},${pos.y})`}
-      onPointerDown={handlePointerDown}
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        if (isPanning || spacePressed || e.button === 1) return;
+        if (e.ctrlKey || e.metaKey) toggleSelect?.(id);
+        else selectOne?.(id);
+      }}
+      // onPointerDown={handlePointerDown} можно наверно убрать
     >
       {src && (
         <foreignObject x={0} y={0} width={size.width} height={size.height}>
@@ -135,7 +144,9 @@ export const FrameGroup: React.FC<FrameGroupProps> = ({
       )}
 
       <rect
-        className={clsx(css.frame_rect, { [css.overlay]: selectedIds?.includes(id) })}
+        className={clsx(css.frame_rect, {
+          [css.overlay]: selectedIds?.includes(id),
+        })}
         fill="none"
         vectorEffect="non-scaling-stroke"
         strokeWidth={visualStroke}

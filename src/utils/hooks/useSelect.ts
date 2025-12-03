@@ -26,11 +26,16 @@ export function useSelect() {
     [selectedIds]
   );
 
+  const selectMany = useCallback((ids: string[]) => {
+    setSelectedIds(new Set(ids));
+  }, []);
+
   return {
     selectedIds,
     isSelected,
     selectOne,
     toggleSelect,
     clearSelection,
+    selectMany,
   };
 }

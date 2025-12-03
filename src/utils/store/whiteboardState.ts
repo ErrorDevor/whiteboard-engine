@@ -22,6 +22,9 @@ interface WhiteboardState {
   pan: { x: number; y: number };
   setPan: (pan: { x: number; y: number }) => void;
 
+  isPanning: boolean;
+  setIsPanning: (p: boolean) => void;
+
   zoom: number;
   setZoom: (zoom: number) => void;
 
@@ -82,6 +85,9 @@ export const whiteboardState = create<WhiteboardState>((set, get) => ({
     isDragging: false,
     selectionRect: null,
   },
+
+   isPanning: false,
+  setIsPanning: (p: boolean) => set({ isPanning: p }),
 
   setSelectionDragging: (isDragging: boolean) =>
     set((state) => ({

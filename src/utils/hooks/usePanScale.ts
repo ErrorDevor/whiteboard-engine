@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { whiteboardState } from "@/utils/store";
 
 type Point = { x: number; y: number };
 
@@ -53,10 +54,12 @@ export function usePanScale({
     function onPointerDown(evt: PointerEvent) {
       if (evt.button === 1 || spacePressedRef.current) {
         if (!(spacePressedRef.current || evt.button === 1)) return;
+
         evt.preventDefault();
         isPanningRef.current = true;
         panSourceRef.current = evt.button === 1 ? "mouse" : "space";
         cursor?.setGrabbing?.();
+        whiteboardState.getState().setIsPanning(true);
 
         const start = { x: evt.clientX, y: evt.clientY };
         const startPan = { ...panRef.current };
@@ -99,9 +102,7 @@ export function usePanScale({
           (evt.target as any).setPointerCapture?.(evt.pointerId);
         } catch {}
       } else {
-
         try {
-
           (evt.target as any).setPointerCapture?.(evt.pointerId);
         } catch {}
       }
@@ -149,6 +150,7 @@ export function usePanScale({
 
       if (pointersRef.current.size < 2) {
         distanceStartRef.current = null;
+        whiteboardState.getState().setIsPanning(false);
       }
     }
 
